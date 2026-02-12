@@ -7,6 +7,42 @@ export interface Client {
   email: string
   name: string
   password: string
+  stravaConnected?: boolean
+  stravaAthleteId?: string
+}
+
+export interface RaceGoal {
+  id: string
+  date: string // ISO date
+  type: string // "5K", "10K", "Half Marathon", "Marathon"
+  targetTime?: string
+  priority: "A" | "B" | "C" // A = primary, B = secondary, C = training
+  notes?: string
+}
+
+export interface InjuryRecord {
+  id: string
+  date: string
+  description: string
+  status: "active" | "recovering" | "healed"
+  affectedAreas: string[]
+  notes?: string
+}
+
+export interface WeeklyCheckIn {
+  weekStart: string // ISO date
+  bodyFeeling: 1 | 2 | 3 | 4 | 5 // 1 = terrible, 5 = excellent
+  sleepQuality: 1 | 2 | 3 | 4 | 5
+  stressLevel: 1 | 2 | 3 | 4 | 5
+  notes: string
+  createdAt: string
+}
+
+export interface TrainingWeek {
+  weekStart: string
+  schedule: Record<string, Workout>
+  totalMiles: number
+  workoutCount: number
 }
 
 export interface Workout {
@@ -193,4 +229,203 @@ export function formatDate(date: Date): string {
     year: "numeric",
   })
 }
+
+// Client Profile Management
+export function getClientProfile(email: string): Client | null {
+  if (typeof window === "undefined") return null
+
+  const clients = getAllClients()
+  return clients[email.toLowerCase()] || null
+}
+
+export function updateClientProfile(email: string, updates: Partial<Client>): void {
+  if (typeof window === "undefined") return
+
+  const clients = getAllClients()
+  const client = clients[email.toLowerCase()]
+  if (!client) return
+
+  clients[email.toLowerCase()] = { ...client, ...updates }
+  localStorage.setItem("clientCredentials", JSON.stringify(clients))
+}
+
+// Race Goal Management
+export function getClientRaceGoals(email: string): RaceGoal[] {
+  if (typeof window === "undefined") return []
+
+  const key = `client_${email.toLowerCase()}_race_goals`
+  const goals = localStorage.getItem(key)
+  if (!goals) return []
+
+  try {
+    return JSON.parse(goals)
+  } catch {
+    return []
+  }
+}
+
+export function addClientRaceGoal(email: string, goal: RaceGoal): void {
+  if (typeof window === "undefined") return
+
+  const goals = getClientRaceGoals(email)
+  goals.push(goal)
+  const key = `client_${email.toLowerCase()}_race_goals`
+  localStorage.setItem(key, JSON.stringify(goals))
+}
+
+export function updateClientRaceGoal(email: string, goalId: string, updates: Partial<RaceGoal>): void {
+  if (typeof window === "undefined") return
+
+  const goals = getClientRaceGoals(email)
+  const index = goals.findIndex(g => g.id === goalId)
+  if (index === -1) return
+
+  goals[index] = { ...goals[index], ...updates }
+  const key = `client_${email.toLowerCase()}_race_goals`
+  localStorage.setItem(key, JSON.stringify(goals))
+}
+
+export function deleteClientRaceGoal(email: string, goalId: string): void {
+  if (typeof window === "undefined") return
+
+  const goals = getClientRaceGoals(email)
+  const filtered = goals.filter(g => g.id !== goalId)
+  const key = `client_${email.toLowerCase()}_race_goals`
+  localStorage.setItem(key, JSON.stringify(filtered))
+}
+
+// Injury Management
+export function getClientInjuries(email: string): InjuryRecord[] {
+  if (typeof window === "undefined") return []
+
+  const key = `client_${email.toLowerCase()}_injuries`
+  const injuries = localStorage.getItem(key)
+  if (!injuries) return []
+
+  try {
+    return JSON.parse(injuries)
+  } catch {
+    return []
+  }
+}
+
+export function addClientInjury(email: string, injury: InjuryRecord): void {
+  if (typeof window === "undefined") return
+
+  const injuries = getClientInjuries(email)
+  injuries.unshift(injury)
+  const key = `client_${email.toLowerCase()}_injuries`
+  localStorage.setItem(key, JSON.stringify(injuries))
+}
+
+export function updateClientInjury(email: string, injuryId: string, updates: Partial<InjuryRecord>): void {
+  if (typeof window === "undefined") return
+
+  const injuries = getClientInjuries(email)
+  const index = injuries.findIndex(i => i.id === injuryId)
+  if (index === -1) return
+
+  injuries[index] = { ...injuries[index], ...updates }
+  const key = `client_${email.toLowerCase()}_injuries`
+  localStorage.setItem(key, JSON.stringify(injuries))
+}
+
+export function deleteClientInjury(email: string, injuryId: string): void {
+  if (typeof window === "undefined") return
+
+  const injuries = getClientInjuries(email)
+  const filtered = injuries.filter(i => i.id !== injuryId)
+  const key = `client_${email.toLowerCase()}_injuries`
+  localStorage.setItem(key, JSON.stringify(filtered))
+}
+
+// Weekly Check-In Management
+export function getClientCheckIns(email: string): WeeklyCheckIn[] {
+  if (typeof window === "undefined") return []
+
+  const key = `client_${email.toLowerCase()}_checkins`
+  const checkIns = localStorage.getItem(key)
+  if (!checkIns) return []
+
+  try {
+    return JSON.parse(checkIns)
+  } catch {
+    return []
+  }
+}
+
+export function addClientCheckIn(email: string, checkIn: WeeklyCheckIn): void {
+  if (typeof window === "undefined") return
+
+  const checkIns = getClientCheckIns(email)
+  checkIns.unshift(checkIn)
+  const key = `client_${email.toLowerCase()}_checkins`
+  localStorage.setItem(key, JSON.stringify(checkIns))
+}
+
+export function getLatestCheckIn(email: string): WeeklyCheckIn | null {
+  const checkIns = getClientCheckIns(email)
+  return checkIns.length > 0 ? checkIns[0] : null
+}
+
+// Training History
+export function getTrainingHistory(email: string, weekCount: number = 8): TrainingWeek[] {
+  if (typeof window === "undefined") return []
+
+  const history: TrainingWeek[] = []
+  const today = new Date()
+
+  for (let i = 1; i <= weekCount; i++) {
+    const weekDate = new Date(today)
+    weekDate.setDate(weekDate.getDate() - (i * 7))
+    const weekStart = getWeekStart(weekDate)
+
+    const schedule = getClientSchedule(email, weekStart)
+    const totalMiles = calculateTotalMileage(schedule)
+    const workoutCount = Object.keys(schedule).filter(key => {
+      const workout = schedule[key]
+      return workout && parseFloat(workout.distance) > 0
+    }).length
+
+    history.push({
+      weekStart: formatDateKey(weekStart),
+      schedule,
+      totalMiles,
+      workoutCount,
+    })
+  }
+
+  return history
+}
+
+export function calculateTotalMileage(schedule: Record<string, Workout>): number {
+  let total = 0
+  Object.values(schedule).forEach(workout => {
+    if (workout && workout.distance) {
+      const miles = parseFloat(workout.distance)
+      if (!isNaN(miles)) {
+        total += miles
+      }
+    }
+  })
+  return Math.round(total * 10) / 10 // Round to 1 decimal
+}
+
+export function getNextRace(email: string): RaceGoal | null {
+  const goals = getClientRaceGoals(email)
+  if (goals.length === 0) return null
+
+  const today = new Date()
+  const upcomingRaces = goals
+    .filter(goal => new Date(goal.date) >= today)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+  return upcomingRaces.length > 0 ? upcomingRaces[0] : null
+}
+
+export function getActiveInjuries(email: string): InjuryRecord[] {
+  const injuries = getClientInjuries(email)
+  return injuries.filter(i => i.status === "active" || i.status === "recovering")
+}
+
 

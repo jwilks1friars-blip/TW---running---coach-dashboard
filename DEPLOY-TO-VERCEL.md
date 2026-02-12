@@ -122,3 +122,4 @@ After deployment:
 
 Your coach dashboard is ready to manage clients! 🎉
 
+
