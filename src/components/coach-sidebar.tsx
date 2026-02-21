@@ -22,6 +22,7 @@ import {
   Bell,
   Settings,
   LogOut,
+  UserPlus,
 } from "lucide-react"
 import { clearCoachAuth } from "@/lib/auth"
 
@@ -35,6 +36,11 @@ const menuItems = [
     title: "Clients",
     icon: Users,
     url: "/clients",
+  },
+  {
+    title: "Inquiries",
+    icon: UserPlus,
+    url: "/inquiries",
   },
   {
     title: "Schedules",
