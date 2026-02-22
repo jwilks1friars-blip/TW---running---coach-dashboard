@@ -156,7 +156,7 @@ function InquiryCard({ signup, onUpdate }: { signup: Signup; onUpdate: (id: stri
             </div>
           </div>
 
-          <a href={`mailto:${signup.email}?subject=Re: Coaching Inquiry - ${signup.programInterest}`}
+          <a href={`mailto:${signup.email}?subject=Re: Running Program Inquiry - ${signup.programInterest}`}
             className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
             <Mail className="h-3.5 w-3.5" />Email {signup.name.split(' ')[0]}
           </a>
