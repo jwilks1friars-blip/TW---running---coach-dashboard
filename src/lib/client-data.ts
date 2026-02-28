@@ -3,6 +3,8 @@
 // Client data management utilities
 // Compatible with localStorage-based system (same as client dashboard)
 
+import type { Client, RaceGoal, InjuryRecord, WeeklyCheckIn, TrainingWeek, Workout, CoachNote, Update } from "./types"
+
 export type {
   Client,
   RaceGoal,
