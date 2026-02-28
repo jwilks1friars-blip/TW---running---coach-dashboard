@@ -1,7 +1,5 @@
-"use client"
-
 import Anthropic from "@anthropic-ai/sdk"
-import type { RaceGoal, InjuryRecord, WeeklyCheckIn, TrainingWeek, Workout } from "./client-data"
+import type { RaceGoal, InjuryRecord, WeeklyCheckIn, TrainingWeek, Workout } from "./types"
 
 // Initialize Anthropic client (will be used server-side)
 function getAnthropicClient() {
