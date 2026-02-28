@@ -1,5 +1,3 @@
-"use client"
-
 import Anthropic from "@anthropic-ai/sdk"
 import type { RaceGoal, InjuryRecord, WeeklyCheckIn, TrainingWeek, Workout } from "./client-data"
 
